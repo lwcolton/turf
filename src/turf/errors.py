@@ -1,1 +1,1 @@
-SectionNotFoundError(BaseException): pass
+class SectionNotFoundError(BaseException): pass
