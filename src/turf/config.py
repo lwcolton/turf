@@ -196,7 +196,7 @@ class BaseConfig:
 
         config_from_file = cls.read_section_from_file(section_name)
 
-        if section_name in merge_hooks:
+        if section_name in mergehooks:
             section_config = mergehooks[section_name](section_name, section_defaults, config_from_file)
         else:
             section_config = dict(list(section_defaults.items()) + list(config_from_file.items()))
