@@ -11,5 +11,5 @@ Table of Contents
 .. toctree::
     :titlesonly:
 
-    API docs <modindex>
+    API docs <turf>
 
