@@ -11,5 +11,5 @@ Table of Contents
 .. toctree::
     :titlesonly:
 
-    BaseConfig <driftwood.config.BaseConfig>
+    BaseConfig <turf.config.BaseConfig>
 
