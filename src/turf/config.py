@@ -8,10 +8,32 @@ class BaseConfig:
 
     @classmethod
     def is_debug(cls):
+        """Returns True if the app is in debug mode, otherwise False"""
         return cls.section("main").get("debug", False)
 
     @classmethod
+    def section(cls, section_name, refresh=False): 
+        """Returns a section of the configuration.
+
+        This is how other parts of the application will access the configuration.
+        """
+        if refresh or cls.cache == None:
+            cls.refresh()
+        return cls.cache.get(section_name, {})
+
+    @classmethod
     def get_sections(cls):
+        """Returns a dictionary containing defaults for each section.
+
+        Override this in your subclass.
+
+        Dictionary structure is like::
+            {
+                'section_name':{
+                    'setting_key':'default_value'
+                },
+            }
+        """
         return {
             "main":{
                 "debug":False
@@ -20,30 +42,69 @@ class BaseConfig:
 
     @classmethod
     def config_dir(cls):
-        raise NotImplementedError
+        """This needs to return the directory where your config files are stored.
 
-    @classmethod
-    def section(cls, section_name, refresh=False): 
-        if refresh or cls.cache == None:
-            cls.refresh()
-        return cls.cache.get(section_name, {})
+        Override this in your subclass.
+
+        :rtype: str
+        """
+        raise NotImplementedError
         
     @classmethod
     def refresh(cls):
+        """Reloads all values from the files on disk, refreshing the cache."""
         cls.cache = {}
         for section_name, section_defaults in cls.get_sections().items():
             cls.cache[section_name] = cls.load_section(section_name, section_defaults)
 
     @classmethod
     def get_prehooks(cls):
+        """Returns a dictionary mapping section names to pre-hooks.
+
+        Return structure is like::
+            {
+                'section_name':<prehook function>
+            }
+        """
         return {}
 
     @classmethod
+    def prehook_interface(cls, section_name, section_defaults):
+        """Defines the interface for pre-hooks.
+
+        Pre-hooks allow you to dynamically add or modify settings to a 
+            section's defaults.
+
+        :param str section_name: The name of the section this prehook is 
+            being called to populate. Useful if you are assigning the same 
+            prehook to multiple sections.
+
+        :param dict section_defaults: Dictionary of default settings for this
+            section as returned by :meth:`get_sections`.
+        
+        :rtype: dict of default values for this section.
+        """
+
+    @classmethod
     def get_mergehooks(cls):
+        """Returns a dictionary mapping section names to merge-hooks.
+
+        Return structure is like::
+            {
+                'section_name':<mergehook function>
+            }
+        """
         return {}
 
     @classmethod
     def get_posthooks(cls):
+        """Returns a dictionary mapping section names to post-hooks.
+
+        Return structure is like::
+            {
+                'section_name':<prehook function>
+            }
+        """
         return {}
 
     @classmethod
