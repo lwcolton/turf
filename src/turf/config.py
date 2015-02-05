@@ -28,6 +28,7 @@ class BaseConfig:
         Override this in your subclass.
 
         Dictionary structure is like::
+
             {
                 'section_name':{
                     'setting_key':'default_value'
