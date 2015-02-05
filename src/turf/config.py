@@ -7,7 +7,7 @@ import cerberus
 from .errors import SectionNotFoundError
 
 class BaseConfig:
-    _cache = {}
+    _cache = None
 
     @classmethod
     def is_debug(cls):
