@@ -71,7 +71,7 @@ class BaseConfig:
         """
         cls._cache = {}
         defaults = cls.get_defaults()
-        for section_name, section_schema in cls.get_schema():
+        for section_name, section_schema in cls.get_schema().items():
             try:
                 section_defaults = defaults[section_name]
             except KeyError:
