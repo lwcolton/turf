@@ -76,7 +76,7 @@ class BaseConfig:
                 section_defaults = defaults[section_name]
             except KeyError:
                 raise cerberus.ValidationError("No defaults found for section {0}".format(section_name))        
-            cls._cache[section_name] = cls.load_section(section_name, section_defaults)
+            cls._cache[section_name] = cls.load_section(section_name, section_defaults, section_schema)
 
     @classmethod
     def get_prehooks(cls):
