@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# src documentation build configuration file, created by
-# sphinx-quickstart on Thu Feb  5 12:22:12 2015.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -48,7 +46,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'src'
+project = 'turf'
 copyright = '2015, Hurricane Labs, LLC'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -181,7 +179,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'srcdoc'
+htmlhelp_basename = 'turfdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -201,7 +199,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'src.tex', 'src Documentation',
+  ('index', 'turf.tex', 'turf Documentation',
    'Hurricane Labs, LLC', 'manual'),
 ]
 
@@ -231,7 +229,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'src', 'src Documentation',
+    ('index', 'turf', 'turf Documentation',
      ['Hurricane Labs, LLC'], 1)
 ]
 
@@ -245,8 +243,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'src', 'src Documentation',
-   'Hurricane Labs, LLC', 'src', 'One line description of project.',
+  ('index', 'turf', 'turf Documentation',
+   'Hurricane Labs, LLC', 'turf', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -266,7 +264,7 @@ texinfo_documents = [
 # -- Options for Epub output ----------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = 'src'
+epub_title = 'turf'
 epub_author = 'Hurricane Labs, LLC'
 epub_publisher = 'Hurricane Labs, LLC'
 epub_copyright = '2015, Hurricane Labs, LLC'
