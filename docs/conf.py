@@ -23,6 +23,8 @@ import os
 
 # -- General configuration ------------------------------------------------
 
+autodoc_member_order = "bysource"
+
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
 
