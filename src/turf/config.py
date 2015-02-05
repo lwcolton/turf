@@ -210,7 +210,8 @@ class BaseConfig:
        
         return section_config
 
-    def read_section_from_file(section_name):
+    @classmethod
+    def read_section_from_file(cls, section_name):
         """Loads a section from its config file and parses the YAML."""
         config_path = os.path.join(cls.config_dir(), "%s.yml" % section_name)
         if os.path.exists(config_path):
