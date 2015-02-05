@@ -4,7 +4,7 @@ import sys
 import yaml
 
 class BaseConfig:
-    cache = None
+    _cache = None
 
     @classmethod
     def is_debug(cls):
@@ -17,9 +17,9 @@ class BaseConfig:
 
         This is how other parts of the application will access the configuration.
         """
-        if refresh or cls.cache == None:
+        if refresh or cls._cache == None:
             cls.refresh()
-        return cls.cache.get(section_name, {})
+        return cls._cache.get(section_name, {})
 
     @classmethod
     def get_sections(cls):
@@ -54,9 +54,9 @@ class BaseConfig:
     @classmethod
     def refresh(cls):
         """Reloads all values from the files on disk, refreshing the cache."""
-        cls.cache = {}
+        cls._cache = {}
         for section_name, section_defaults in cls.get_sections().items():
-            cls.cache[section_name] = cls.load_section(section_name, section_defaults)
+            cls._cache[section_name] = cls.load_section(section_name, section_defaults)
 
     @classmethod
     def get_prehooks(cls):
