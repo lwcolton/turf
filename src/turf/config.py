@@ -95,7 +95,7 @@ class BaseConfig:
         """Defines the interface for pre-hooks.
 
         Pre-hooks allow you to dynamically add or modify settings to a 
-            section's defaults.
+        section's defaults.
 
         :param str section_name: The name of the section this prehook is 
             being called to populate. Useful if you are assigning the same 
