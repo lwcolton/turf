@@ -11,5 +11,5 @@ Table of Contents
 .. toctree::
     :titlesonly:
 
-    config <turf.config>
+    :class:`turf.config.BaseConfig`
 
