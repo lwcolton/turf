@@ -84,6 +84,7 @@ class BaseConfig:
         
         :rtype: dict of default values for this section.
         """
+        raise NotImplementedError
 
     @classmethod
     def get_mergehooks(cls):
@@ -97,18 +98,66 @@ class BaseConfig:
         return {}
 
     @classmethod
+    def mergehook_interface(cls, section_name, section_defaults, config_from_file):
+        """Defines the interface for merge-hooks.
+
+        Merge-hooks merge default settings for a section with those from the config file.
+        The default behavior with no merge hook defined for a section is to overwrite
+        top level keys in the defaults with those from the config file.  If this behavior
+        is undesirable, you can use a merge-hook to define a custom implementation.
+
+        :param str section_name: The name of the section this mergehook is 
+            being called to populate. Useful if you are assigning the same 
+            mergehook to multiple sections.
+
+        :param dict section_defaults: Dictionary of default settings for this
+            section as returned by :meth:`get_sections`.
+
+        :param dict config_from_file: Dictionary of settings for this section
+            as defined in its config file.
+
+        :rtype: dict of settings to use for this section.
+        """
+        raise NotImplementedError
+
+
+    @classmethod
     def get_posthooks(cls):
         """Returns a dictionary mapping section names to post-hooks.
 
         Return structure is like::
             {
-                'section_name':<prehook function>
+                'section_name':<posthook function>
             }
         """
         return {}
 
     @classmethod
+    def posthook_interface(cls, section_name, section_config):
+        """Defintes the interface for post-hooks.
+
+        Post-hooks are called after a config section is loaded and are useful for 
+        any modifications you might need to make after defaults have been
+        merged into the config from the file.
+
+        :param str section_name: The name of the section this posthook is 
+            being called to populate. Useful if you are assigning the same 
+            posthook to multiple sections.
+        
+        :param dict section_config: The configuration for this section.
+        
+        :rtype: dict of settings to use for this section.
+        """ 
+        raise NotImplementedError
+
+    @classmethod
     def load_section(cls, section_name, section_defaults):
+        """Handles loading section.
+
+        Calls all hooks and implements default merge behavior if none is defined.
+
+        :rtype: dict of settings for this section.
+        """
         prehooks = cls.get_prehooks()
         mergehooks = cls.get_mergehooks()
         posthooks = cls.get_posthooks()
@@ -129,6 +178,7 @@ class BaseConfig:
         return section_config
 
     def read_section_from_file(section_name):
+        """Loads a section from its config file and parses the YAML."""
         config_path = os.path.join(cls.config_dir(), "%s.yml" % section_name)
         if os.path.exists(config_path):
             with open(config_path) as config_file_handle:
