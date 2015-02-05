@@ -63,6 +63,7 @@ class BaseConfig:
         """Returns a dictionary mapping section names to pre-hooks.
 
         Return structure is like::
+
             {
                 'section_name':<prehook function>
             }
@@ -92,6 +93,7 @@ class BaseConfig:
         """Returns a dictionary mapping section names to merge-hooks.
 
         Return structure is like::
+
             {
                 'section_name':<mergehook function>
             }
@@ -127,6 +129,7 @@ class BaseConfig:
         """Returns a dictionary mapping section names to post-hooks.
 
         Return structure is like::
+
             {
                 'section_name':<posthook function>
             }
