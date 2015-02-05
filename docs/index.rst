@@ -11,5 +11,5 @@ Table of Contents
 .. toctree::
     :titlesonly:
 
-    :class:`turf.config.BaseConfig`
+    API docs <modindex>
 
