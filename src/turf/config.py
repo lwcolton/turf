@@ -2,7 +2,7 @@ import os
 import sys
 
 import yaml
-import cerbrus
+import cerberus
 
 from .errors import SectionNotFoundError
 
@@ -29,7 +29,7 @@ class BaseConfig:
 
     @classmethod    
     def get_schema(cls):
-        """Returns a cerbrus schema describing the structure of your config."""
+        """Returns a cerberus schema describing the structure of your config."""
         raise NotImplementedError
 
     @classmethod
@@ -75,7 +75,7 @@ class BaseConfig:
             try:
                 section_defaults = defaults[section_name]
             except KeyError:
-                raise cerbrus.ValidationError("No defaults found for section {0}".format(section_name))        
+                raise cerberus.ValidationError("No defaults found for section {0}".format(section_name))        
             cls._cache[section_name] = cls.load_section(section_name, section_defaults)
 
     @classmethod
@@ -186,7 +186,7 @@ class BaseConfig:
         mergehooks = cls.get_mergehooks()
         posthooks = cls.get_posthooks()
 
-        validator = cerbrus.Validator(section_schema)
+        validator = cerberus.Validator(section_schema)
         validator.validate(section_defaults, update=True)
 
         if section_name in prehooks:
