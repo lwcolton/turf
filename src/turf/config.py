@@ -2,9 +2,12 @@ import os
 import sys
 
 import yaml
+import cerbrus
+
+from .errors import SectionNotFoundError
 
 class BaseConfig:
-    _cache = None
+    _cache = {}
 
     @classmethod
     def is_debug(cls):
@@ -19,10 +22,18 @@ class BaseConfig:
         """
         if refresh or cls._cache == None:
             cls.refresh()
-        return cls._cache.get(section_name, {})
+        try:
+            return cls._cache[section_name]
+        except KeyError:
+            raise SectionNotFoundError(section_name)
+
+    @classmethod    
+    def get_schema(cls):
+        """Returns a cerbrus schema describing the structure of your config."""
+        raise NotImplementedError
 
     @classmethod
-    def get_sections(cls):
+    def get_defaults(cls):
         """Returns a dictionary containing defaults for each section.
 
         Override this in your subclass.
@@ -53,9 +64,18 @@ class BaseConfig:
         
     @classmethod
     def refresh(cls):
-        """Reloads all values from the files on disk, refreshing the cache."""
+        """Reloads all values from the files on disk, refreshing the cache.
+        
+        It's usually a good idea to call this during application startup
+        because it will validate the configuration against the schema.
+        """
         cls._cache = {}
-        for section_name, section_defaults in cls.get_sections().items():
+        defaults = cls.get_defaults()
+        for section_name, section_schema in cls.get_schema():
+            try:
+                section_defaults = defaults[section_name]
+            except KeyError:
+                raise cerbrus.ValidationError("No defaults found for section {0}".format(section_name))        
             cls._cache[section_name] = cls.load_section(section_name, section_defaults)
 
     @classmethod
@@ -155,19 +175,24 @@ class BaseConfig:
         raise NotImplementedError
 
     @classmethod
-    def load_section(cls, section_name, section_defaults):
+    def load_section(cls, section_name, section_defaults, section_schema):
         """Handles loading section.
 
         Calls all hooks and implements default merge behavior if none is defined.
 
         :rtype: dict of settings for this section.
-        """
+        """ 
         prehooks = cls.get_prehooks()
         mergehooks = cls.get_mergehooks()
         posthooks = cls.get_posthooks()
 
+        validator = cerbrus.Validator(section_schema)
+        validator.validate(section_defaults, update=True)
+
         if section_name in prehooks:
             section_defaults = prehooks[section_name](section_name, section_defaults)
+
+        validator.validate(section_defaults, update=True)
 
         config_from_file = cls.read_section_from_file(section_name)
 
@@ -176,9 +201,13 @@ class BaseConfig:
         else:
             section_config = dict(list(section_defaults.items()) + list(config_from_file.items()))
 
+        validator.validate(section_config, update=True)
+
         if section_name in posthooks:
             section_config = posthooks[section_name](section_name, section_config)
-        
+
+        validator.validate(section_config)
+       
         return section_config
 
     def read_section_from_file(section_name):

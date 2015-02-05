@@ -1,0 +1,1 @@
+SectionNotFoundError(BaseException): pass
