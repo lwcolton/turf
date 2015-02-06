@@ -118,3 +118,14 @@ class TestConfig:
                 return_value={section_name:fake_hook})) as posthooks_patch:
             assert BaseConfig.load_section(section_name, {}, fake_schema) == {fake_key:fake_val}
             fake_hook.assert_called_once_with(section_name, {})
+
+    @mock.patch("turf.config.BaseConfig.read_section_from_file")
+    def test_load_section_default_merge(self, read_section_patch):
+        section_name = uuid.uuid4().hex
+        fake_key = uuid.uuid4().hex
+        fake_val = uuid.uuid4().hex
+        fake_schema = {fake_key:{"type":"string"}}
+        defaults = {fake_key:"bad_val"}
+        read_section_patch.return_value = {fake_key:fake_val}
+        assert BaseConfig.load_section(section_name, defaults, fake_schema) == {fake_key:fake_val}
+         
