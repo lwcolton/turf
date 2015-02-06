@@ -88,10 +88,7 @@ class BaseConfig:
         cls._cache = {}
         defaults = cls.get_defaults()
         for section_name, section_schema in cls.get_schema().items():
-            try:
-                section_defaults = defaults[section_name]
-            except KeyError:
-                raise cerberus.ValidationError("No defaults found for section {0}".format(section_name))        
+            section_defaults = defaults.get(section_name, {})
             cls._cache[section_name] = cls.load_section(section_name, section_defaults, section_schema)
 
     @classmethod

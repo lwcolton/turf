@@ -3,6 +3,7 @@ from unittest import mock
 import uuid
 
 from nose2.tools import params
+from nose2.tools.such import helper as assert_helper
 
 from turf.config import BaseConfig
 
@@ -36,6 +37,24 @@ class TestConfig:
                 BaseConfig.section("fake_section")
                 refresh_patch.assert_called_one_with()
             
+    def test_get_schema(self):
+        fake_schema = uuid.uuid4().hex
+        with mock.patch("turf.config.BaseConfig.schema", new=mock.PropertyMock(
+                return_value = fake_schema)) as schema_mock:
+            assert BaseConfig.get_schema() == fake_schema
 
-    
+    def test_get_defaults(self):
+        fake_defaults = uuid.uuid4().hex
+        with mock.patch("turf.config.BaseConfig.defaults", new=mock.PropertyMock(
+                return_value = fake_defaults)) as defaults_mock:
+            assert BaseConfig.get_defaults() == fake_defaults
+
+    def test_get_config_dir(self):
+        assert_helper.assertRaises(NotImplementedError, BaseConfig.get_config_dir) 
+        with mock.patch("turf.config.BaseConfig.config_dir", new=mock.PropertyMock(
+                return_value = "fake_config_dir")) as config_dir_mock:
+            assert BaseConfig.get_config_dir() == "fake_config_dir"
+
+    def test_refresh(self):
+        pass
         
