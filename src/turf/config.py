@@ -7,8 +7,6 @@ import cerberus
 from .errors import SectionNotFoundError
 
 class BaseConfig:
-    _cache = None
-
     defaults = {
         "main":{
             "debug":False
@@ -22,6 +20,11 @@ class BaseConfig:
             }
         }
     }
+
+    config_dir = None
+
+    _cache = None
+
 
     @classmethod
     def is_debug(cls):
@@ -67,14 +70,17 @@ class BaseConfig:
         }
 
     @classmethod
-    def config_dir(cls):
+    def get_config_dir(cls):
         """This needs to return the directory where your config files are stored.
 
         Override this in your subclass.
 
         :rtype: str
         """
-        raise NotImplementedError
+        if cls.config_dir == None:
+            raise NotImplementedError("Must define config_dir")
+        else:
+            return cls.config_dir
         
     @classmethod
     def refresh(cls):
@@ -232,7 +238,7 @@ class BaseConfig:
     @classmethod
     def read_section_from_file(cls, section_name):
         """Loads a section from its config file and parses the YAML."""
-        config_path = os.path.join(cls.config_dir(), "%s.yml" % section_name)
+        config_path = os.path.join(cls.get_config_dir(), "%s.yml" % section_name)
         if os.path.exists(config_path):
             with open(config_path) as config_file_handle:
                 return yaml.load(config_file_handle)
