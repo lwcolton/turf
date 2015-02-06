@@ -56,5 +56,18 @@ class TestConfig:
             assert BaseConfig.get_config_dir() == "fake_config_dir"
 
     def test_refresh(self):
-        pass
+        section_name = uuid.uuid4().hex
+        fake_key = uuid.uuid4().hex
+        fake_schema = {fake_key:{"type":"string"}}
+        fake_defaults = {uuid.uuid4().hex:4}
+        with mock.patch("turf.config.BaseConfig.defaults", new=mock.PropertyMock(
+                return_value = {section_name:fake_defaults})) as defaults_mock:
+            with mock.patch("turf.config.BaseConfig.schema", new=mock.PropertyMock(
+                    return_value = {section_name:fake_schema})) as schema_mock:
+                with mock.patch("turf.config.BaseConfig.load_section") as load_section_mock:
+                    fake_rv = uuid.uuid4().hex
+                    load_section_mock.return_value = fake_rv
+                    BaseConfig.refresh()
+                    assert BaseConfig._cache[section_name] == fake_rv
+                    assert load_section_mock.called_once_with(section_name, fake_defaults, fake_schema)
         
