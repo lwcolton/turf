@@ -1,3 +1,5 @@
+from io import StringIO
+import os
 import random
 from unittest import mock
 import uuid
@@ -128,4 +130,21 @@ class TestConfig:
         defaults = {fake_key:"bad_val"}
         read_section_patch.return_value = {fake_key:fake_val}
         assert BaseConfig.load_section(section_name, defaults, fake_schema) == {fake_key:fake_val}
+
+    def test_read_section(cls):
+        fake_config_dir = os.path.join("/tmp", uuid.uuid4().hex)
+        section_name = uuid.uuid4().hex
+        config_path = os.path.join(fake_config_dir, "{0}.yml".format(section_name))
+        fake_key = uuid.uuid4().hex
+        fake_val = uuid.uuid4().hex
+        fake_yml = "---\n{0}: {1}".format(fake_key, fake_val)
+
+        with mock.patch("turf.config.BaseConfig.config_dir", new=mock.PropertyMock(
+                return_value = fake_config_dir)) as config_dir_patch:
+            with mock.patch("builtins.open") as patch_open:
+                with mock.patch("os.path.exists") as exists_patch:
+                    exists_patch.return_value = True
+                    patch_open.return_value = StringIO(fake_yml) 
+                    assert BaseConfig.read_section_from_file(section_name) == {fake_key:fake_val}
+                    patch_open.assert_called_once_with(config_path)
          
