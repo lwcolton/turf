@@ -90,6 +90,31 @@ class TestConfig:
         fake_hook = mock.MagicMock(return_value = {fake_key:fake_val})
         with mock.patch("turf.config.BaseConfig.prehooks", new=mock.PropertyMock(
                 return_value={section_name:fake_hook})) as prehooks_patch:
-            BaseConfig.load_section(section_name, {}, fake_schema)
+            assert BaseConfig.load_section(section_name, {}, fake_schema) == {fake_key:fake_val}
             fake_hook.assert_called_once_with(section_name, {})
 
+    @mock.patch("turf.config.BaseConfig.read_section_from_file")
+    def test_load_section_mergehook(self, read_section_patch):
+        read_section_patch.return_value = {}
+        section_name = uuid.uuid4().hex
+        fake_key = uuid.uuid4().hex
+        fake_val = uuid.uuid4().hex
+        fake_schema = {fake_key:{"type":"string"}}
+        fake_hook = mock.MagicMock(return_value = {fake_key:fake_val})
+        with mock.patch("turf.config.BaseConfig.mergehooks", new=mock.PropertyMock(
+                return_value={section_name:fake_hook})) as mergehooks_patch:
+            assert BaseConfig.load_section(section_name, {}, fake_schema) == {fake_key:fake_val}
+            fake_hook.assert_called_once_with(section_name, {}, {})
+
+    @mock.patch("turf.config.BaseConfig.read_section_from_file")
+    def test_load_section_posthook(self, read_section_patch):
+        read_section_patch.return_value = {}
+        section_name = uuid.uuid4().hex
+        fake_key = uuid.uuid4().hex
+        fake_val = uuid.uuid4().hex
+        fake_schema = {fake_key:{"type":"string"}}
+        fake_hook = mock.MagicMock(return_value = {fake_key:fake_val})
+        with mock.patch("turf.config.BaseConfig.posthooks", new=mock.PropertyMock(
+                return_value={section_name:fake_hook})) as posthooks_patch:
+            assert BaseConfig.load_section(section_name, {}, fake_schema) == {fake_key:fake_val}
+            fake_hook.assert_called_once_with(section_name, {})
