@@ -63,11 +63,7 @@ class BaseConfig:
                 },
             }
         """
-        return {
-            "main":{
-                "debug":False
-            }
-        }
+        return cls.defaults
 
     @classmethod
     def get_config_dir(cls):
