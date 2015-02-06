@@ -2,6 +2,7 @@ import random
 from unittest import mock
 import uuid
 
+import cerberus
 from nose2.tools import params
 from nose2.tools.such import helper as assert_helper
 
@@ -70,4 +71,25 @@ class TestConfig:
                     BaseConfig.refresh()
                     assert BaseConfig._cache[section_name] == fake_rv
                     assert load_section_mock.called_once_with(section_name, fake_defaults, fake_schema)
-        
+
+    def test_load_section_schema_error(self):
+        section_name = uuid.uuid4().hex
+        fake_default_key = uuid.uuid4().hex
+        fake_defaults = {fake_default_key:4}
+        assert_helper.assertRaises(
+                cerberus.ValidationError, BaseConfig.load_section, 
+                section_name, fake_defaults, {fake_default_key:{"type":"boolean"}})
+
+    @mock.patch("turf.config.BaseConfig.read_section_from_file")
+    def test_load_section_prehook(self, read_section_patch):
+        read_section_patch.return_value = {}
+        section_name = uuid.uuid4().hex
+        fake_key = uuid.uuid4().hex
+        fake_val = uuid.uuid4().hex
+        fake_schema = {fake_key:{"type":"string"}}
+        fake_hook = mock.MagicMock(return_value = {fake_key:fake_val})
+        with mock.patch("turf.config.BaseConfig.prehooks", new=mock.PropertyMock(
+                return_value={section_name:fake_hook})) as prehooks_patch:
+            BaseConfig.load_section(section_name, {}, fake_schema)
+            fake_hook.assert_called_once_with(section_name, {})
+

@@ -21,6 +21,10 @@ class BaseConfig:
         }
     }
 
+    prehooks = {}
+    mergehooks = {}
+    posthooks = {}
+
     config_dir = None
 
     _cache = None
@@ -101,7 +105,7 @@ class BaseConfig:
                 'section_name':<prehook function>
             }
         """
-        return {}
+        return cls.prehooks
 
     @classmethod
     def prehook_interface(cls, section_name, section_defaults):
@@ -131,7 +135,7 @@ class BaseConfig:
                 'section_name':<mergehook function>
             }
         """
-        return {}
+        return cls.mergehooks
 
     @classmethod
     def mergehook_interface(cls, section_name, section_defaults, config_from_file):
@@ -167,7 +171,7 @@ class BaseConfig:
                 'section_name':<posthook function>
             }
         """
-        return {}
+        return cls.posthooks
 
     @classmethod
     def posthook_interface(cls, section_name, section_config):
