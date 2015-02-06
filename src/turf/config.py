@@ -9,6 +9,14 @@ from .errors import SectionNotFoundError
 class BaseConfig:
     _cache = None
 
+    defaults = {
+        "main":{
+            "debug":False
+        }
+    }
+
+    schema = None
+
     @classmethod
     def is_debug(cls):
         """Returns True if the app is in debug mode, otherwise False"""
@@ -30,7 +38,10 @@ class BaseConfig:
     @classmethod    
     def get_schema(cls):
         """Returns a cerberus schema describing the structure of your config."""
-        raise NotImplementedError
+        if cls.schema == None:
+            raise NotImplementedError("Schema must be set")
+        else:
+            return cls.schema
 
     @classmethod
     def get_defaults(cls):
