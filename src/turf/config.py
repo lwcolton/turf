@@ -15,7 +15,13 @@ class BaseConfig:
         }
     }
 
-    schema = None
+    schema = {
+        "main":{
+            "debug":{
+                "type":"boolean"
+            }
+        }
+    }
 
     @classmethod
     def is_debug(cls):
@@ -38,10 +44,7 @@ class BaseConfig:
     @classmethod    
     def get_schema(cls):
         """Returns a cerberus schema describing the structure of your config."""
-        if cls.schema == None:
-            raise NotImplementedError("Schema must be set")
-        else:
-            return cls.schema
+        return cls.schema
 
     @classmethod
     def get_defaults(cls):
