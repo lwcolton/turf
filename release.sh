@@ -19,8 +19,8 @@ echo $new_version > version
 git add version
 git commit -m "Release $new_version"
 git tag -a $new_version -m "Release $new_version"
-git checkout master
+git checkout staging
 git merge develop
-git push origin master --tags
+git push origin staging
 git checkout develop
 git push origin develop
