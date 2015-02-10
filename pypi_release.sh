@@ -6,5 +6,6 @@ if [ "$branch" != "master" ]; then
     exit 1
 fi
 git diff --exit-code
+git pull origin master
 python setup.py register -r pypi
 python setup.py sdist upload -r pypi
