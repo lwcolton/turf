@@ -24,5 +24,3 @@ git merge develop
 git push origin master --tags
 git checkout develop
 git push origin develop
-python setup.py register -r pypi
-python setup.py sdist upload -r pypi
