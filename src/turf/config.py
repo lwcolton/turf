@@ -11,6 +11,10 @@ class BaseConfig:
 
     You can subclass this to gain all sorts of neat functionality,
     like merging of defaults and readiny YAML from config files.
+
+    You are required to provide a schema for your configuration,
+    either using :attr:`schema` or :meth:`get_schema`.  This
+    should be a `cerberus schema <https://cerberus.readthedocs.org/en/latest/>`_.
     """
     defaults = {
         "main":{
