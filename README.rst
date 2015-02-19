@@ -44,11 +44,5 @@ Basic Configuration Manager
     print(MyConfig.section("foo")["blah"])
 
 Will produce::
+
     bar
-
-
-
-
-
-
-
