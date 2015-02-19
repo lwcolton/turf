@@ -77,6 +77,17 @@ class BaseConfig:
                     }
                 }
              }
+
+        Example:
+            {
+                "app":{
+                    "mysetting":{
+                        "type":"string"
+                    }
+                }
+            }
+
+        Given that schema, you would have a file called app.yml with a key mysetting set to a string.
         """
         return cls.schema
 
