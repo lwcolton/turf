@@ -7,6 +7,11 @@ import cerberus
 from .errors import SectionNotFoundError
 
 class BaseConfig:
+    """Provides a base class for a configuration manager.
+
+    You can subclass this to gain all sorts of neat functionality,
+    like merging of defaults and readiny YAML from config files.
+    """
     defaults = {
         "main":{
             "debug":False
