@@ -57,7 +57,7 @@ class BaseConfig:
     def get_defaults(cls):
         """Returns a dictionary containing defaults for each section.
 
-        Override this in your subclass.
+        Without overriding, this will return :attr:`defaults`.
 
         Dictionary structure is like::
 
