@@ -28,11 +28,13 @@ Basic Configuration Manager
 ===========================
 
 .. code-block:: shell
+
     $ cat /tmp/turftest/foo.yml 
     ---
     blah: bar
 
 .. code-block:: python
+
     from turf.config import BaseConfig
 
     class MyConfig(BaseConfig):
