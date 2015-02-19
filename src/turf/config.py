@@ -78,7 +78,8 @@ class BaseConfig:
                 }
              }
 
-        Example:
+        Example::
+
             {
                 "app":{
                     "mysetting":{
