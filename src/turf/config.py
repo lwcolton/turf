@@ -15,6 +15,7 @@ class BaseConfig:
     You are required to provide a schema for your configuration,
     either using :attr:`schema` or :meth:`get_schema`.  This
     should be a `cerberus schema <https://cerberus.readthedocs.org/en/latest/>`_.
+    See :meth:`get_schema` for implementation details.
     """
     defaults = {
         "main":{
@@ -63,7 +64,20 @@ class BaseConfig:
 
     @classmethod    
     def get_schema(cls):
-        """Returns a cerberus schema describing the structure of your config."""
+        """Returns a dictionary of cerberus schema describing the structure of your config.
+
+        The top level keys should be section names and their values should be cerberus schema.
+
+        The structure is like::
+
+            {
+                "section_name":{
+                    "field_name":{
+                        "ceberus":"schema"
+                    }
+                }
+             }
+        """
         return cls.schema
 
     @classmethod
