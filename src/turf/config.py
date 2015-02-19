@@ -40,6 +40,10 @@ class BaseConfig:
         """Returns a section of the configuration.
 
         This is how other parts of the application will access the configuration.
+
+        Example::
+
+            Config.section("my_section")["my_setting"]
         """
         if refresh or cls._cache == None:
             cls.refresh()
@@ -73,7 +77,7 @@ class BaseConfig:
     def get_config_dir(cls):
         """This needs to return the directory where your config files are stored.
 
-        Override this in your subclass.
+        Without overriding, this will return :attr:`config_dir`, which you must set.
 
         :rtype: str
         """
@@ -98,6 +102,8 @@ class BaseConfig:
     @classmethod
     def get_prehooks(cls):
         """Returns a dictionary mapping section names to pre-hooks.
+
+        Without overriding, this will return :attr:`prehooks`.
 
         Return structure is like::
 
@@ -128,6 +134,8 @@ class BaseConfig:
     @classmethod
     def get_mergehooks(cls):
         """Returns a dictionary mapping section names to merge-hooks.
+
+        Without overriding, this will return :attr:`mergehooks`.
 
         Return structure is like::
 
@@ -164,6 +172,8 @@ class BaseConfig:
     @classmethod
     def get_posthooks(cls):
         """Returns a dictionary mapping section names to post-hooks.
+
+        Without overriding, this will return :attr:`posthooks`.
 
         Return structure is like::
 
