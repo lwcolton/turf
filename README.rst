@@ -6,6 +6,13 @@ turf
 
 **Configuration and environment inspection library**
 
+Turf makes managing configuration for your Python application easy.
+It provides a standard file access and naming convention,
+as well as extensive configuration validation.
+Turf allows you to specify what your applications configuration
+should look like, and then worry about your application
+and not parsing config files.
+
 Get Turf
 ========
 
