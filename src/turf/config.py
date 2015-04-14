@@ -283,6 +283,6 @@ class BaseConfig:
         config_path = os.path.join(cls.get_config_dir(), "%s.yml" % section_name)
         if os.path.exists(config_path):
             with open(config_path) as config_file_handle:
-                return yaml.load(config_file_handle)
+                return yaml.safe_load(config_file_handle)
         else:
            return {}
