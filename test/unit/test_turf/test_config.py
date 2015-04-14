@@ -9,6 +9,7 @@ from nose2.tools import params
 from nose2.tools.such import helper as assert_helper
 
 from turf.config import BaseConfig
+from turf.errors import ValidationError
 
 def random_settings_dict():
     return {uuid.uuid4().hex:uuid.uuid4().hex for x in range(0,random.randrange(5,10))}
@@ -79,7 +80,7 @@ class TestConfig:
         fake_default_key = uuid.uuid4().hex
         fake_defaults = {fake_default_key:4}
         assert_helper.assertRaises(
-                cerberus.ValidationError, BaseConfig.load_section, 
+                ValidationError, BaseConfig.load_section, 
                 section_name, fake_defaults, {fake_default_key:{"type":"boolean"}})
 
     @mock.patch("turf.config.BaseConfig.read_section_from_file")
