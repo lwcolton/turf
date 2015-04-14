@@ -251,13 +251,13 @@ class BaseConfig:
         validator = cerberus.Validator(section_schema)
 
         if not validator.validate(section_defaults, update=True):
-            self.raise_validation_error(section_name, validator.errors)
+            cls.raise_validation_error(section_name, validator.errors)
 
         if section_name in prehooks:
             section_defaults = prehooks[section_name](section_name, section_defaults)
 
         if not validator.validate(section_defaults, update=True):
-            self.raise_validation_error(section_name, validator.errors)
+            cls.raise_validation_error(section_name, validator.errors)
 
         config_from_file = cls.read_section_from_file(section_name)
 
@@ -267,13 +267,13 @@ class BaseConfig:
             section_config = dict(list(section_defaults.items()) + list(config_from_file.items()))
 
         if not validator.validate(section_config, update=True):
-            self.raise_validation_error(section_name, validator.errors)
+            cls.raise_validation_error(section_name, validator.errors)
 
         if section_name in posthooks:
             section_config = posthooks[section_name](section_name, section_config)
 
         if not validator.validate(section_config):
-            self.raise_validation_error(section_name, validator.errors)
+            cls.raise_validation_error(section_name, validator.errors)
        
         return section_config
 
