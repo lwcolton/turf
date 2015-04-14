@@ -4,7 +4,7 @@ import sys
 import yaml
 import cerberus
 
-from .errors import SectionNotFoundError
+from .errors import SectionNotFoundError, ValidationError
 
 class BaseConfig:
     """Provides a base class for a configuration manager.
@@ -251,13 +251,13 @@ class BaseConfig:
         validator = cerberus.Validator(section_schema)
 
         if not validator.validate(section_defaults, update=True):
-            raise cerberus.ValidationError(validator.errors)
+            self.raise_validation_error(section_name, validator.errors)
 
         if section_name in prehooks:
             section_defaults = prehooks[section_name](section_name, section_defaults)
 
         if not validator.validate(section_defaults, update=True):
-            raise cerberus.ValidationError(validator.errors)
+            self.raise_validation_error(section_name, validator.errors)
 
         config_from_file = cls.read_section_from_file(section_name)
 
@@ -267,13 +267,13 @@ class BaseConfig:
             section_config = dict(list(section_defaults.items()) + list(config_from_file.items()))
 
         if not validator.validate(section_config, update=True):
-            raise cerberus.ValidationError(validator.errors)
+            self.raise_validation_error(section_name, validator.errors)
 
         if section_name in posthooks:
             section_config = posthooks[section_name](section_name, section_config)
 
         if not validator.validate(section_config):
-            raise cerberus.ValidationError(validator.errors)
+            self.raise_validation_error(section_name, validator.errors)
        
         return section_config
 
@@ -286,3 +286,8 @@ class BaseConfig:
                 return yaml.safe_load(config_file_handle)
         else:
            return {}
+
+    @classmethod
+    def raise_validation_error(cls, section, errors):
+        message = "Errors validating section '{0}':\n\n{1}".format(section, errors)
+        raise ValidationError(message, section, errors)
