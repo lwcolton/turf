@@ -19,9 +19,9 @@ class FakeConfig:
                 fake_dict.__getitem__ = lambda x, y: self.missing_default
                 return fake_dict
 
-def create_fake_config(config):
+def create_fake_config(config, **kwargs):
     fake_config = mock.MagicMock()
-    fake_config._fake_config = FakeConfig(config)
+    fake_config._fake_config = FakeConfig(config, **kwargs)
     fake_config.section = fake_config._fake_config.section
     return fake_config
 
