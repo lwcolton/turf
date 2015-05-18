@@ -1,6 +1,8 @@
 """This module contains pre-defined schema that may be useful"""
 import copy
 
+required_full_string = {"type":"string", "required":True, "empty":False}
+
 #Bugsnag 
 bugsnag_api_key = {"type":"string", "regex":"^[a-f0-9]{32}$"}
 bugsnag_release_stage = {"type":"string"}
