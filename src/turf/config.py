@@ -64,6 +64,14 @@ class BaseConfig:
         except KeyError:
             raise SectionNotFoundError(section_name)
 
+    @classmethod
+    def get_validator(cls, schema=None):
+        """Returns a cerberus validator from the schema"""
+        if schema is None:
+            schema = cls.get_schema()
+
+        return cerberus.Validator(schema)
+
     @classmethod    
     def get_schema(cls):
         """Returns a dictionary of cerberus schema describing the structure of your config.
@@ -250,7 +258,7 @@ class BaseConfig:
         mergehooks = cls.get_mergehooks()
         posthooks = cls.get_posthooks()
 
-        validator = cerberus.Validator(section_schema)
+        validator = cls.get_validator(section_schema)
 
         if not validator.validate(section_defaults, update=True):
             cls.raise_validation_error(section_name, validator.errors)
