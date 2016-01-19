@@ -23,6 +23,6 @@ setup(
 	author_email = "colton@hurricanelabs.com",
 	package_dir = {"":"src"},
 	packages = find_packages("src"),
-    install_requires = ["pyyaml", "cerberus"],
+    install_requires = ["pyyaml", "cerberus", "boto3"],
 )
 
