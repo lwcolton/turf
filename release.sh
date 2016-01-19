@@ -14,7 +14,7 @@ echo "Current version: $current_version"
 read -e -p "Enter new version: " new_version
 echo "Using $new_version"
 read -r -p "Are you sure? [Y/n]" response
-response=${response,,} # tolower
+response=$( echo ${release} | tr 'A-Z' 'a-z' ) # lower case
 if [[ $response =~ ^(n|no| ) ]]; then
     exit 1
 fi
