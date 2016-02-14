@@ -131,10 +131,6 @@ class BaseConfig:
             return cls.config_dir
 
     @classmethod
-    def get_sections(cls):
-        return cls.get_schema().items()
-
-    @classmethod
     def refresh(cls):
         """Reloads all values from the files on disk, refreshing the cache.
 
@@ -143,7 +139,7 @@ class BaseConfig:
         """
         cls._cache = {}
         defaults = cls.get_defaults()
-        for section_name, section_schema in cls.get_sections():
+        for section_name, section_schema in cls.get_schema().items():
             section_defaults = defaults.get(section_name, {})
             cls._cache[section_name] = cls.load_section(section_name, section_defaults, section_schema)
 
@@ -330,17 +326,11 @@ class SingleFileConfig(BaseConfig):
             return cls.search_path
 
     @classmethod
-    def get_sections(cls):
-        if cls._conf_cache is None:
-            cls.refresh_conf_cache()
-        return cls._conf_cache.keys()
-
-    @classmethod
     def get_file_path(cls):
         if cls.config_file is None:
             raise NotImplementedError("Must define config_file")
         else:
-            for path in cls.get_config_search_path():
+            for path in cls.get_config_search_path():  # pylint: disable=not-an-iterable
                 if os.path.exists(os.path.join(path, cls.config_file)):
                     return os.path.join(path, cls.config_file)
 
@@ -356,7 +346,7 @@ class SingleFileConfig(BaseConfig):
         cls._cache = {}
         defaults = cls.get_defaults()
         schema = cls.get_schema()
-        for section_name in cls.get_sections():
+        for section_name in cls._conf_cache.keys():
             section_defaults = defaults.get(section_name, {})
             section_schema = schema[section_name]
             cls._cache[section_name] = cls.load_section(section_name, section_defaults, section_schema)
