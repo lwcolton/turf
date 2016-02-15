@@ -1,3 +1,4 @@
+# flake8: noqa
 from io import StringIO
 import os
 import random
@@ -8,7 +9,7 @@ import cerberus
 from nose2.tools import params
 from nose2.tools.such import helper as assert_helper
 
-from turf.config import BaseConfig
+from turf.config import BaseConfig, SingleFileConfig
 from turf.errors import ValidationError
 
 def random_settings_dict():
@@ -40,7 +41,7 @@ class TestConfig:
             with mock.patch("turf.config.BaseConfig.refresh") as refresh_patch:
                 BaseConfig.section("fake_section")
                 refresh_patch.assert_called_one_with()
-            
+
     def test_get_schema(self):
         fake_schema = uuid.uuid4().hex
         with mock.patch("turf.config.BaseConfig.schema", new=mock.PropertyMock(
@@ -54,7 +55,7 @@ class TestConfig:
             assert BaseConfig.get_defaults() == fake_defaults
 
     def test_get_config_dir(self):
-        assert_helper.assertRaises(NotImplementedError, BaseConfig.get_config_dir) 
+        assert_helper.assertRaises(NotImplementedError, BaseConfig.get_config_dir)
         with mock.patch("turf.config.BaseConfig.config_dir", new=mock.PropertyMock(
                 return_value = "fake_config_dir")) as config_dir_mock:
             assert BaseConfig.get_config_dir() == "fake_config_dir"
@@ -80,7 +81,7 @@ class TestConfig:
         fake_default_key = uuid.uuid4().hex
         fake_defaults = {fake_default_key:4}
         assert_helper.assertRaises(
-                ValidationError, BaseConfig.load_section, 
+                ValidationError, BaseConfig.load_section,
                 section_name, fake_defaults, {fake_default_key:{"type":"boolean"}})
 
     @mock.patch("turf.config.BaseConfig.read_section_from_file")
@@ -142,10 +143,86 @@ class TestConfig:
 
         with mock.patch("turf.config.BaseConfig.config_dir", new=mock.PropertyMock(
                 return_value = fake_config_dir)) as config_dir_patch:
-            with mock.patch("builtins.open") as patch_open:
+            with mock.patch("yaml.safe_load") as patch_yaml:
+                patch_yaml.return_value = {fake_key:fake_val}
+
+                with mock.patch("builtins.open") as patch_open:
+                    patch_open.return_value = StringIO(fake_yml)
+
+                    with mock.patch("os.path.exists") as exists_patch:
+                        exists_patch.return_value = True
+
+                        section_config = BaseConfig.read_section_from_file(section_name)
+                        assert section_config == {fake_key:fake_val}
+                        patch_open.assert_called_once_with(config_path)
+                        patch_yaml.assert_called_once()
+
+    def test_get_file_path_for_section(self):
+        fake_config_dir = os.path.join("/tmp", uuid.uuid4().hex)
+        section_name = uuid.uuid4().hex
+        config_path = os.path.join(fake_config_dir, "{0}.yml".format(section_name))
+
+        with mock.patch("turf.config.BaseConfig.config_dir", new=mock.PropertyMock(
+                return_value = fake_config_dir)) as config_dir_patch:
+            assert BaseConfig.get_file_path_for_section(section_name) == config_path
+
+    def test_get_config_search_path(self):
+        fake_config_dir = os.path.join("/tmp", uuid.uuid4().hex)
+        with mock.patch("turf.config.SingleFileConfig.search_path", new=mock.PropertyMock(
+                return_value = [fake_config_dir])) as config_dir_patch:
+            assert SingleFileConfig.get_config_search_path() == [fake_config_dir]
+
+    def test_get_file_path(self):
+        fake_config_dir = os.path.join("/tmp", uuid.uuid4().hex)
+        fake_file_name = "{0}.yml".format(uuid.uuid4().hex)
+        config_path = os.path.join(fake_config_dir, fake_file_name)
+
+        with mock.patch("turf.config.SingleFileConfig.search_path", new=mock.PropertyMock(
+                return_value = [fake_config_dir])) as config_dir_patch:
+            with mock.patch("turf.config.SingleFileConfig.config_file", new=mock.PropertyMock(
+                    return_value = fake_file_name)) as config_file_patch:
+
                 with mock.patch("os.path.exists") as exists_patch:
                     exists_patch.return_value = True
-                    patch_open.return_value = StringIO(fake_yml) 
-                    assert BaseConfig.read_section_from_file(section_name) == {fake_key:fake_val}
-                    patch_open.assert_called_once_with(config_path)
-         
+
+                    assert SingleFileConfig.get_file_path() == config_path
+
+    def test_single_file_config_refresh(self):
+        fake_config_dir = os.path.join("/tmp", uuid.uuid4().hex)
+        fake_file_name = "{0}.yml".format(uuid.uuid4().hex)
+
+        fake_section = uuid.uuid4().hex
+        fake_key = uuid.uuid4().hex
+        fake_val = uuid.uuid4().hex
+        fake_config = {fake_section:{fake_key:fake_val}}
+
+        class Config(SingleFileConfig):
+            search_path = [fake_config_dir]
+            config_file = fake_file_name
+            schema = {fake_section:{fake_key:{"type":"string"}}}
+
+        with mock.patch("turf.config.SingleFileConfig.yaml_load") as patch_yaml:
+            patch_yaml.return_value = fake_config
+
+            Config.refresh()
+            assert fake_section in Config._cache
+
+
+    def test_single_file_config(self):
+        fake_config_dir = os.path.join("/tmp", uuid.uuid4().hex)
+        fake_file_name = "{0}.yml".format(uuid.uuid4().hex)
+
+        fake_section = uuid.uuid4().hex
+        fake_key = uuid.uuid4().hex
+        fake_val = uuid.uuid4().hex
+        fake_config = {fake_section:{fake_key:fake_val}}
+
+        class Config(SingleFileConfig):
+            search_path = [fake_config_dir]
+            config_file = fake_file_name
+            schema = {fake_section:{fake_key:{"type":"string"}}}
+
+        with mock.patch("turf.config.SingleFileConfig.yaml_load") as patch_yaml:
+            patch_yaml.return_value = fake_config
+
+            assert Config.read_section_from_file(fake_section) == fake_config[fake_section]

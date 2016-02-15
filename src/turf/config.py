@@ -1,5 +1,4 @@
 import os
-import sys
 
 import yaml
 import cerberus
@@ -48,7 +47,7 @@ class BaseConfig:
         return cls.section("main").get("debug", False)
 
     @classmethod
-    def section(cls, section_name, refresh=False): 
+    def section(cls, section_name, refresh=False):
         """Returns a section of the configuration.
 
         This is how other parts of the application will access the configuration.
@@ -72,7 +71,7 @@ class BaseConfig:
 
         return cerberus.Validator(schema)
 
-    @classmethod    
+    @classmethod
     def get_schema(cls):
         """Returns a dictionary of cerberus schema describing the structure of your config.
 
@@ -130,11 +129,11 @@ class BaseConfig:
             raise NotImplementedError("Must define config_dir")
         else:
             return cls.config_dir
-        
+
     @classmethod
     def refresh(cls):
         """Reloads all values from the files on disk, refreshing the cache.
-        
+
         It's usually a good idea to call this during application startup
         because it will validate the configuration against the schema.
         """
@@ -162,16 +161,16 @@ class BaseConfig:
     def prehook_interface(cls, section_name, section_defaults):
         """Defines the interface for pre-hooks.
 
-        Pre-hooks allow you to dynamically add or modify settings to a 
+        Pre-hooks allow you to dynamically add or modify settings to a
         section's defaults.
 
-        :param str section_name: The name of the section this prehook is 
-            being called to populate. Useful if you are assigning the same 
+        :param str section_name: The name of the section this prehook is
+            being called to populate. Useful if you are assigning the same
             prehook to multiple sections.
 
         :param dict section_defaults: Dictionary of default settings for this
             section as returned by :meth:`get_sections`.
-        
+
         :rtype: dict of default values for this section.
         """
         raise NotImplementedError
@@ -199,8 +198,8 @@ class BaseConfig:
         top level keys in the defaults with those from the config file.  If this behavior
         is undesirable, you can use a merge-hook to define a custom implementation.
 
-        :param str section_name: The name of the section this mergehook is 
-            being called to populate. Useful if you are assigning the same 
+        :param str section_name: The name of the section this mergehook is
+            being called to populate. Useful if you are assigning the same
             mergehook to multiple sections.
 
         :param dict section_defaults: Dictionary of default settings for this
@@ -232,18 +231,18 @@ class BaseConfig:
     def posthook_interface(cls, section_name, section_config):
         """Defintes the interface for post-hooks.
 
-        Post-hooks are called after a config section is loaded and are useful for 
+        Post-hooks are called after a config section is loaded and are useful for
         any modifications you might need to make after defaults have been
         merged into the config from the file.
 
-        :param str section_name: The name of the section this posthook is 
-            being called to populate. Useful if you are assigning the same 
+        :param str section_name: The name of the section this posthook is
+            being called to populate. Useful if you are assigning the same
             posthook to multiple sections.
-        
+
         :param dict section_config: The configuration for this section.
-        
+
         :rtype: dict of settings to use for this section.
-        """ 
+        """
         raise NotImplementedError
 
     @classmethod
@@ -253,7 +252,7 @@ class BaseConfig:
         Calls all hooks and implements default merge behavior if none is defined.
 
         :rtype: dict of settings for this section.
-        """ 
+        """
         prehooks = cls.get_prehooks()
         mergehooks = cls.get_mergehooks()
         posthooks = cls.get_posthooks()
@@ -284,23 +283,76 @@ class BaseConfig:
 
         if not validator.validate(section_config):
             cls.raise_validation_error(section_name, validator.errors)
-       
+
         return section_config
+
+    @classmethod
+    def get_file_path_for_section(cls, section_name):
+        return os.path.join(cls.get_config_dir(), "%s.yml" % section_name)
+
+    @classmethod
+    def yaml_load(cls, config_path):
+        with open(config_path) as config_file_handle:
+            if cls.safe_load:
+                return yaml.safe_load(config_file_handle)
+            else:
+                return yaml.load(config_file_handle)
 
     @classmethod
     def read_section_from_file(cls, section_name):
         """Loads a section from its config file and parses the YAML."""
-        config_path = os.path.join(cls.get_config_dir(), "%s.yml" % section_name)
+        config_path = cls.get_file_path_for_section(section_name)
         if os.path.exists(config_path):
-            with open(config_path) as config_file_handle:
-                if cls.safe_load:
-                    return yaml.safe_load(config_file_handle)
-                else:
-                    return yaml.load(config_file_handle)
+            return cls.yaml_load(config_path)
         else:
-           return {}
+            return {}
 
     @classmethod
     def raise_validation_error(cls, section, errors):
         message = "Errors validating section '{0}':\n\n{1}".format(section, errors)
         raise ValidationError(message, section, errors)
+
+
+class SingleFileConfig(BaseConfig):
+    config_file = None
+    search_path = None
+    _conf_cache = None
+
+    @classmethod
+    def get_config_search_path(cls):
+        if cls.search_path is None:
+            raise NotImplementedError("Must define search_path")
+        else:
+            return cls.search_path
+
+    @classmethod
+    def get_file_path(cls):
+        if cls.config_file is None:
+            raise NotImplementedError("Must define config_file")
+        else:
+            for path in cls.get_config_search_path():  # pylint: disable=not-an-iterable
+                if os.path.exists(os.path.join(path, cls.config_file)):
+                    return os.path.join(path, cls.config_file)
+
+    @classmethod
+    def refresh_conf_cache(cls):
+        config_path = cls.get_file_path()
+        cls._conf_cache = cls.yaml_load(config_path)
+
+    @classmethod
+    def refresh(cls):
+        cls.refresh_conf_cache()
+
+        cls._cache = {}
+        defaults = cls.get_defaults()
+        schema = cls.get_schema()
+        for section_name in cls._conf_cache.keys():
+            section_defaults = defaults.get(section_name, {})
+            section_schema = schema[section_name]
+            cls._cache[section_name] = cls.load_section(section_name, section_defaults, section_schema)
+
+    @classmethod
+    def read_section_from_file(cls, section_name):
+        if cls._conf_cache is None:
+            cls.refresh_conf_cache()
+        return cls._conf_cache.get(section_name, {})
