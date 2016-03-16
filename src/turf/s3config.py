@@ -42,6 +42,8 @@ class S3Config(BaseConfig):
         if len(s3_path) == 1:
             # Configs are in root of bucket
             s3_path = ""
+            s3_filename = "{0}.yml".format(section_name)
+            return s3_filename
         else:
             # Configs are in a folder in a bucket
             s3_path = "/".join(s3_path[1:])
@@ -85,7 +87,6 @@ class S3Config(BaseConfig):
 
 def save_config(config_class, config_file_contents, section_name, kms_key=None):
     import cerberus
-
     s3_client = config_class.get_aws_client("s3")
 
     if config_class.safe_load:
