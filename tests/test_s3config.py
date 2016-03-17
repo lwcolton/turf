@@ -1,10 +1,9 @@
 import base64
 import unittest
-from unittest.mock import MagicMock, patch, sentinel
+from unittest.mock import MagicMock, patch, sentinel, Mock
 
 import yaml
 from turf.s3config import S3Config, save_config
-
 
 class MyConfig(S3Config):
     config_dir = "{0}/{1}".format(sentinel.bucket, sentinel.path)
@@ -153,3 +152,11 @@ class TestSaveConfig(unittest.TestCase):
             Key=MyConfig.get_s3_path(str(sentinel.section)),
             Body=base64.b64encode(str(sentinel.ciphertext_blob).encode())
         )
+
+    def test_get_s3_path(self):
+        '''
+        test for single name in top level dir
+        '''
+        MyConfig.get_s3_path = Mock(return_value='file.yml')
+        response = MyConfig.get_s3_path(str(sentinel.section))
+        self.assertEqual('file.yml',response)
