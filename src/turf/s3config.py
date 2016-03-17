@@ -1,5 +1,6 @@
 import base64
 
+import botocore
 import boto3
 import yaml
 
@@ -55,10 +56,17 @@ class S3Config(BaseConfig):
         """Loads a section from S3 and parses the YAML."""
         s3_client = cls.get_aws_client("s3")
 
-        s3_response = s3_client.get_object(
-            Bucket=cls.get_s3_bucket(),
-            Key=cls.get_s3_path(section_name)
-        )
+        try:
+            s3_response = s3_client.get_object(
+                Bucket=cls.get_s3_bucket(),
+                Key=cls.get_s3_path(section_name)
+            )
+        except botocore.exceptions.ClientError as client_error:
+            if "NoSuchKey" in repr(client_error):
+                return {}
+            else:
+                raise 
+            
 
         try:
             config_file_contents = s3_response["Body"].read(s3_response["ContentLength"])
