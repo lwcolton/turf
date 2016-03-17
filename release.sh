@@ -28,7 +28,7 @@ git checkout master
 git merge develop
 git push origin master
 
-python setup.py register -r pypi
-python setup.py sdist upload -r pypi
+python3 setup.py register -r pypi
+python3 setup.py sdist upload -r pypi
 
 git checkout develop
