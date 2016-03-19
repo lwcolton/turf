@@ -292,20 +292,20 @@ class BaseConfig:
 
     @classmethod
     def yaml_load(cls, config_path):
-        with open(config_path) as config_file_handle:
-            if cls.safe_load:
-                return yaml.safe_load(config_file_handle)
-            else:
-                return yaml.load(config_file_handle)
+        if config_path and os.path.exists(config_path):
+            with open(config_path) as config_file_handle:
+                if cls.safe_load:
+                    return yaml.safe_load(config_file_handle)
+                else:
+                    return yaml.load(config_file_handle)
+        else:
+            return {}
 
     @classmethod
     def read_section_from_file(cls, section_name):
         """Loads a section from its config file and parses the YAML."""
         config_path = cls.get_file_path_for_section(section_name)
-        if os.path.exists(config_path):
-            return cls.yaml_load(config_path)
-        else:
-            return {}
+        return cls.yaml_load(config_path)
 
     @classmethod
     def raise_validation_error(cls, section, errors):
