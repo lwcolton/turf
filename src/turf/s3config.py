@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     config_parts = args.config.split(".")
     config_module = importlib.import_module(".".join(config_parts[:-1]))
-    config = getattr(config_module, config_parts[-1])
+    config = getattr(config_module, config_parts[-1])()
 
     with open(args.source_file, "rb") as f:
         config_file_contents = f.read()
