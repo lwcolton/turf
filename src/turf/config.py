@@ -6,7 +6,7 @@ import warnings
 import yaml
 import cerberus
 
-from .errors import SectionNotFoundError, ValidationError
+from .errors import SectionNotFoundError, SchemaNotFoundError, ValidationError
 
 class BaseConfig(UserDict):
     """Provides a base class for a configuration manager.
@@ -70,13 +70,16 @@ class BaseConfig(UserDict):
 
             config["my_section"]["my_setting"]
         """
-        section_schema = self.get_schema()[key]
+        try:
+            section_schema = self.get_schema()[key]
+        except KeyError:
+            raise SchemaNotFoundError(key) from KeyError
         if int(time.time()) - self.last_refresh > self.refresh_seconds:
             self.refresh_section(key, section_schema)
         try:
             return self.data[key]
         except KeyError:
-            raise SectionNotFoundError(section_name)
+            raise SectionNotFoundError(key) from KeyError
 
     def get_validator(self, schema=None):
         """Returns a cerberus validator from the schema"""
