@@ -93,7 +93,7 @@ class S3Config(BaseConfig):
         return config_from_file
 
 
-def save_config(config, config_file_contents, section_name, kms_key=None):
+def save_config(cls, config_file_contents, section_name, kms_key=None):
     import cerberus
     s3_client = config.get_aws_client("s3")
 

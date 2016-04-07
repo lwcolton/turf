@@ -30,9 +30,23 @@ class BaseConfig(UserDict):
 
     config_dir = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, values=None, schema=None, defaults=None, 
+                 config_dir=None, refresh_seconds=60, **kwargs):
+        """
+        :param str refresh_seconds: The age of a section in seconds before 
+            it will be refreshed from the configuration upon access.
+        """
+        values.update(kwargs)
+        super().__init__(*args, **values)
+        if schema is not None:
+            self.schema = schema
+        if defaults is not None:
+            self.defaults.update(defaults)
+        if config_dir is not None:
+            self.config_dir = config_dir
         self.section = self.get_section
+        self.refresh_seconds = refresh_seconds
+        self.last_refresh = None
         self.refresh()
 
     @classmethod
@@ -41,19 +55,23 @@ class BaseConfig(UserDict):
         config = cls()
         return config.section(section_name)
 
-    def get_section(self, section_name, refresh=False):
+    def get_section(self, section_name):
+        return self[section_name]
+
+    def __getitem__(self, key):
         """Returns a section of the configuration.
 
         This is how other parts of the application will access the configuration.
 
         Example::
 
-            Config.section("my_section")["my_setting"]
+            config["my_section"]["my_setting"]
         """
-        if refresh:
-            self.refresh()
+        section_schema = self.get_schema()[key]
+        if int(time.time()) - self.last_refresh > self.refresh_seconds:
+            self.refresh_section(key, section_schema)
         try:
-            return self.data[section_name]
+            return self.data[key]
         except KeyError:
             raise SectionNotFoundError(section_name)
 
@@ -125,12 +143,16 @@ class BaseConfig(UserDict):
 
         This will be called on creating of a Config.
         """
+        self.last_refresh = int(time.time())
         self.data = {}
-        defaults = self.get_defaults()
         for section_name, section_schema in self.get_schema().items():
-            section_defaults = defaults.get(section_name, {})
-            self.data[section_name] = self.load_section(section_name, section_defaults, section_schema)
+            self.refresh_section(section_name, section_schema)
 
+
+    def refresh_section(self, section_name, section_schema):
+        defaults = self.get_defaults()
+        section_defaults = defaults.get(section_name, {})
+        self.data[section_name] = self.load_section(section_name, section_defaults, section_schema)
     
     def get_prehooks(self):
         """Returns a dictionary mapping section names to pre-hooks.
