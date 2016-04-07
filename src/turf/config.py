@@ -36,6 +36,8 @@ class BaseConfig(UserDict):
         :param str refresh_seconds: The age of a section in seconds before 
             it will be refreshed from the configuration upon access.
         """
+        if values is None:
+            values = {}
         values.update(kwargs)
         super().__init__(*args, **values)
         if schema is not None:
