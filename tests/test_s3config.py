@@ -125,20 +125,20 @@ class TestS3Config(unittest.TestCase):
     @patch("yaml.safe_load", return_value={})
     def test_save_config_parses_config(self, yaml_mock):
         aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
-        result = save_config(self.config, raw_yaml_body, str(sentinel.section), None)
+        result = save_config(raw_yaml_body, str(sentinel.section), config=self.config)
         yaml_mock.assert_called_with(raw_yaml_body)
 
     def test_save_config_validates_config(self):
         aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
         validator_mock = patch.object(self.config, "get_validator", return_value=MockAwsClient).start()
-        result = save_config(self.config, raw_yaml_body, str(sentinel.section), None)
+        result = save_config(raw_yaml_body, str(sentinel.section), config=self.config)
         self.config.get_validator.assert_called_with(self.config.schema[str(sentinel.section)])
         validator_mock.return_value.validate.assert_called_with(mock_config_dict)
 
     @patch("yaml.safe_load", return_value=mock_config_dict)
     def test_save_config_calls_encrypt(self, yaml_mock):
         aws_mock = patch.object(self.kms_config, "get_aws_client", return_value=MockAwsClient).start()
-        result = save_config(self.kms_config, raw_yaml_body, str(sentinel.section), str(sentinel.kms_key))
+        result = save_config(raw_yaml_body, str(sentinel.section), kms_key=str(sentinel.kms_key), config=self.kms_config)
         aws_mock.return_value.encrypt.assert_called_with(
             KeyId=str(sentinel.kms_key),
             Plaintext=raw_yaml_body
@@ -147,7 +147,7 @@ class TestS3Config(unittest.TestCase):
     @patch("yaml.safe_load", return_value=mock_config_dict)
     def test_save_config_calls_put_object(self, yaml_mock):
         aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
-        result = save_config(self.config, raw_yaml_body, str(sentinel.section), None)
+        result = save_config(raw_yaml_body, str(sentinel.section), config=self.config)
         aws_mock.return_value.put_object.assert_called_with(
             Bucket=self.config.get_s3_bucket(),
             Key=self.config.get_s3_path(str(sentinel.section)),
@@ -157,7 +157,7 @@ class TestS3Config(unittest.TestCase):
     @patch("yaml.safe_load", return_value=mock_config_dict)
     def test_save_config_saves_encrypted_config(self, yaml_mock):
         aws_mock = patch.object(self.kms_config, "get_aws_client", return_value=MockAwsClient).start()
-        result = save_config(self.kms_config, raw_yaml_body, str(sentinel.section), str(sentinel.kms_key))
+        result = save_config(raw_yaml_body, str(sentinel.section), kms_key=str(sentinel.kms_key), config=self.kms_config)
         aws_mock.return_value.put_object.assert_called_with(
             Bucket=self.kms_config.get_s3_bucket(),
             Key=self.kms_config.get_s3_path(str(sentinel.section)),

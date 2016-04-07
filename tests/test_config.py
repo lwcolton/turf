@@ -2,7 +2,7 @@
 from io import StringIO
 import os
 import random
-from unittest import mock
+from unittest import mock, TestCase
 import uuid
 
 from nose2.tools import params
@@ -17,22 +17,27 @@ def random_settings_dict():
 def random_settings_many():
     return [random_settings_dict() for x in range(0,6)]
 
-class TestConfig:
+class TestConfig(TestCase):
+
+    def tearDown(self):
+        mock.patch.stopall()
 
     @params(*random_settings_many())
     def test_section(self, section_dict):
         section_name = uuid.uuid4().hex
         config = BaseConfig()
-        with mock.patch.object(config, "data", new={section_name:section_dict}) as data_mock:
-            for setting_name, setting_value in section_dict.items():
-                assert config.section(section_name)[setting_name] == setting_value
+        mock.patch.object(config, "data", new={section_name:section_dict}).start()
+        mock.patch.object(config, "schema", new={section_name:{}}).start()
+        for setting_name, setting_value in section_dict.items():
+            assert config.section(section_name)[setting_name] == setting_value
 
     def test_section_refresh(self):
         config = BaseConfig()
-        with mock.patch.object(config, "data", new={"fake_section":{}}) as data_mock:
-            with mock.patch.object(config, "refresh") as refresh_patch:
-                config.section("fake_section")
-                refresh_patch.assert_called_one_with()
+        mock.patch.object(config, "data", new={"fake_section":{}}).start()
+        mock.patch.object(config, "schema", new={"fake_section":{}}).start()
+        with mock.patch.object(config, "refresh") as refresh_patch:
+            config.section("fake_section")
+            refresh_patch.assert_called_one_with()
 
     def test_get_schema(self):
         fake_schema = {}

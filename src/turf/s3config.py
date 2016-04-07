@@ -2,6 +2,7 @@ import base64
 
 import botocore
 import boto3
+import cerberus
 import yaml
 
 from .config import BaseConfig
@@ -92,37 +93,40 @@ class S3Config(BaseConfig):
             return {}
         return config_from_file
 
+    @classmethod
+    def save_config(cls, config_file_contents, section_name, config=None, kms_key=None):
+        if config is None:
+            config = cls()
+        s3_client = config.get_aws_client("s3")
 
-def save_config(cls, config_file_contents, section_name, kms_key=None):
-    import cerberus
-    s3_client = config.get_aws_client("s3")
+        if config.safe_load:
+            config_dict = yaml.safe_load(config_file_contents)
+        else:
+            config_dict = yaml.load(config_file_contents)
 
-    if config.safe_load:
-        config_dict = yaml.safe_load(config_file_contents)
-    else:
-        config_dict = yaml.load(config_file_contents)
+        validator = config.get_validator(config.schema[section_name])
+        valid = validator.validate(config_dict)
 
-    validator = config.get_validator(config.schema[section_name])
-    valid = validator.validate(config_dict)
+        if not valid:
+            raise cerberus.ValidationError(",".join(["{0}: {1}".format(k, v) for (k, v) in validator.errors.items()]))
 
-    if not valid:
-        raise cerberus.ValidationError(",".join(["{0}: {1}".format(k, v) for (k, v) in validator.errors.items()]))
+        if config.encrypted:
+            kms_client = config.get_aws_client("kms")
+            response = kms_client.encrypt(
+                KeyId=kms_key,
+                Plaintext=config_file_contents
+            )
+            config_file_contents = base64.b64encode(response["CiphertextBlob"])
 
-    if config.encrypted:
-        kms_client = config.get_aws_client("kms")
-        response = kms_client.encrypt(
-            KeyId=kms_key,
-            Plaintext=config_file_contents
+        s3_client.put_object(
+            Bucket=config.get_s3_bucket(),
+            Key=config.get_s3_path(section_name),
+            Body=config_file_contents
         )
-        config_file_contents = base64.b64encode(response["CiphertextBlob"])
 
-    s3_client.put_object(
-        Bucket=config.get_s3_bucket(),
-        Key=config.get_s3_path(section_name),
-        Body=config_file_contents
-    )
+        return config_file_contents
 
-    return config_file_contents
+save_config = S3Config.save_config
 
 
 if __name__ == "__main__":
@@ -142,5 +146,4 @@ if __name__ == "__main__":
 
     with open(args.source_file, "rb") as f:
         config_file_contents = f.read()
-
-    save_config(config, config_file_contents, args.section_name, args.kms_key)
+    save_config(config_file_contents, args.section_name, config=config, kms_key=args.kms_key)
