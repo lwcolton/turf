@@ -6,6 +6,7 @@ import cerberus
 import yaml
 
 from .config import BaseConfig
+from .errors import ConfigurationNotFoundError
 
 
 class S3Config(BaseConfig):
@@ -56,18 +57,22 @@ class S3Config(BaseConfig):
     def read_section_from_file(self, section_name):
         """Loads a section from S3 and parses the YAML."""
         s3_client = self.get_aws_client("s3")
-
+        bucket = self.get_s3_bucket()
         try:
             s3_response = s3_client.get_object(
-                Bucket=self.get_s3_bucket(),
+                Bucket=bucket,
                 Key=self.get_s3_path(section_name)
             )
         except botocore.exceptions.ClientError as client_error:
             if "NoSuchKey" in repr(client_error):
                 return {}
+            elif "NoSuchBucket" in repr(client_error):
+                raise ConfigurationNotFoundError("Unable to get config from bucket: {0}: {1}".format(
+                    bucket, repr(client_error)
+                    )
+                )
             else:
-                raise 
-            
+                raise
 
         try:
             config_file_contents = s3_response["Body"].read(s3_response["ContentLength"])
