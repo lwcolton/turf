@@ -76,7 +76,7 @@ S3 Config Example IAM Policy
                 ],
                 "Principal": {
                     "AWS": [
-                        "arn:aws:iam::474397523211:role/my-app-role"
+                        "arn:aws:iam:::role/my-app-role"
                     ]
                 }
             }
