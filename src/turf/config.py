@@ -346,7 +346,10 @@ class SingleFileConfig(BaseConfig):
         cls._cache = {}
         defaults = cls.get_defaults()
         schema = cls.get_schema()
-        for section_name in cls._conf_cache.keys():
+
+        keys = set(list(cls._conf_cache.keys()) + list(defaults.keys()))
+
+        for section_name in keys:
             section_defaults = defaults.get(section_name, {})
             section_schema = schema[section_name]
             cls._cache[section_name] = cls.load_section(section_name, section_defaults, section_schema)
