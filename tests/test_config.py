@@ -152,7 +152,7 @@ class TestConfig(TestCase):
                         section_config = BaseConfig().read_section_from_file(section_name)
                         assert section_config == {fake_key:fake_val}
                         patch_open.assert_called_once_with(config_path)
-                        patch_yaml.assert_called_once()
+                        patch_yaml.assert_called_once_with()
 
     def test_get_file_path_for_section(self):
         fake_config_dir = os.path.join("/tmp", uuid.uuid4().hex)
