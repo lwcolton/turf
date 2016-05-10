@@ -50,7 +50,8 @@ Basic Configuration Manager
         config_dir = "/tmp/turftest"
         schema = {"foo":{"blah":{"type":"string"}}}
 
-    print(MyConfig.section("foo")["blah"])
+    config = MyConfig()
+    print(config["foo"]["blah"])
 
 Will produce::
 
