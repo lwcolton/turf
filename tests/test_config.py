@@ -9,7 +9,7 @@ from nose2.tools import params
 from nose2.tools.such import helper as assert_helper
 
 from turf.config import BaseConfig
-from turf.errors import ValidationError
+from turf.errors import ValidationError, SectionNotFoundError
 
 def random_settings_dict():
     return {uuid.uuid4().hex:uuid.uuid4().hex for x in range(0,random.randrange(5,10))}
@@ -32,12 +32,19 @@ class TestConfig(TestCase):
             assert config.section(section_name)[setting_name] == setting_value
 
     def test_section_refresh(self):
-        config = BaseConfig()
-        mock.patch.object(config, "data", new={"fake_section":{}}).start()
-        mock.patch.object(config, "schema", new={"fake_section":{}}).start()
-        with mock.patch.object(config, "refresh") as refresh_patch:
-            config.section("fake_section")
-            refresh_patch.assert_called_once_with()
+        fake_schema = {"fake_section":{}}
+
+        class TestConfigRefreshClass(BaseConfig):
+            data={"fake_section":{}}
+            schema = fake_schema
+            refresh_section = mock.MagicMock()
+
+        config = TestConfigRefreshClass()
+        try:
+            config["fake_section"]
+        except SectionNotFoundError:
+            pass
+        TestConfigRefreshClass.refresh_section.assert_called_once_with("fake_section", {})
 
     def test_get_schema(self):
         fake_schema = {}
@@ -152,7 +159,7 @@ class TestConfig(TestCase):
                         section_config = BaseConfig().read_section_from_file(section_name)
                         assert section_config == {fake_key:fake_val}
                         patch_open.assert_called_once_with(config_path)
-                        patch_yaml.assert_called_once_with()
+                        patch_yaml.assert_called_once_with(patch_open.return_value)
 
     def test_get_file_path_for_section(self):
         fake_config_dir = os.path.join("/tmp", uuid.uuid4().hex)
