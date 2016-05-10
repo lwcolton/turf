@@ -25,11 +25,12 @@ class TestConfig(TestCase):
     @params(*random_settings_many())
     def test_section(self, section_dict):
         section_name = uuid.uuid4().hex
-        config = BaseConfig()
-        mock.patch.object(config, "data", new={section_name:section_dict}).start()
-        mock.patch.object(config, "schema", new={section_name:{}}).start()
-        for setting_name, setting_value in section_dict.items():
-            assert config.section(section_name)[setting_name] == setting_value
+        with mock.patch.object(BaseConfig, "refresh_section"):
+            config = BaseConfig()
+            mock.patch.object(config, "data", new={section_name:section_dict}).start()
+            mock.patch.object(config, "schema", new={section_name:{}}).start()
+            for setting_name, setting_value in section_dict.items():
+                assert config.section(section_name)[setting_name] == setting_value
 
     def test_section_refresh(self):
         fake_schema = {"fake_section":{}}
@@ -40,6 +41,8 @@ class TestConfig(TestCase):
             refresh_section = mock.MagicMock()
 
         config = TestConfigRefreshClass()
+        TestConfigRefreshClass.refresh_section.assert_called_once_with("fake_section", {})
+        config.refresh_section = mock.MagicMock()
         try:
             config["fake_section"]
         except SectionNotFoundError:

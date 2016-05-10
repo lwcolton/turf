@@ -49,7 +49,7 @@ class BaseConfig(UserDict):
             self.config_dir = config_dir
         self.section = self.get_section
         self.refresh_seconds = refresh_seconds
-        self.last_refresh = None
+        self.last_refresh_sections = {}
         self.refresh()
 
     @classmethod
@@ -74,8 +74,16 @@ class BaseConfig(UserDict):
             section_schema = self.get_schema()[key]
         except KeyError:
             raise SchemaNotFoundError(key) from KeyError
-        if int(time.time()) - self.last_refresh > self.refresh_seconds:
+        last_refresh = self.last_refresh_sections.get(key)
+        do_refresh=False
+        if not last_refresh:
+            do_refresh=True
+        elif int(time.time()) - last_refresh > self.refresh_seconds:
+            do_refresh=True
+
+        if do_refresh:
             self.refresh_section(key, section_schema)
+
         try:
             return self.data[key]
         except KeyError:
@@ -149,7 +157,6 @@ class BaseConfig(UserDict):
 
         This will be called on creating of a Config.
         """
-        self.last_refresh = int(time.time())
         self.data = {}
         for section_name, section_schema in self.get_schema().items():
             self.refresh_section(section_name, section_schema)
@@ -159,6 +166,7 @@ class BaseConfig(UserDict):
         defaults = self.get_defaults()
         section_defaults = defaults.get(section_name, {})
         self.data[section_name] = self.load_section(section_name, section_defaults, section_schema)
+        self.last_refresh_sections[section_name] = int(time.time())
     
     def get_prehooks(self):
         """Returns a dictionary mapping section names to pre-hooks.
