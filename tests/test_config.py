@@ -2,6 +2,7 @@
 from io import StringIO
 import os
 import random
+import time
 from unittest import mock, TestCase
 import uuid
 
@@ -36,18 +37,17 @@ class TestConfig(TestCase):
         fake_schema = {"fake_section":{}}
 
         class TestConfigRefreshClass(BaseConfig):
-            data={"fake_section":{}}
             schema = fake_schema
-            refresh_section = mock.MagicMock()
+            load_section = mock.MagicMock()
 
-        config = TestConfigRefreshClass()
-        TestConfigRefreshClass.refresh_section.assert_called_once_with("fake_section", {})
-        config.refresh_section = mock.MagicMock()
-        try:
-            config["fake_section"]
-        except SectionNotFoundError:
-            pass
-        TestConfigRefreshClass.refresh_section.assert_called_once_with("fake_section", {})
+        config = TestConfigRefreshClass(refresh_seconds=2)
+        config.data={"fake_section":{}}
+        TestConfigRefreshClass.load_section.assert_called_once_with("fake_section", {}, {})
+        config["fake_section"]
+        TestConfigRefreshClass.load_section.assert_called_once_with("fake_section", {}, {})
+        time.sleep(2)
+        TestConfigRefreshClass.load_section.assert_called_once_with("fake_section", {}, {})
+
 
     def test_get_schema(self):
         fake_schema = {}
