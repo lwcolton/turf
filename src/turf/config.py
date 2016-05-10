@@ -54,7 +54,7 @@ class BaseConfig(UserDict):
 
     @classmethod
     def section(cls, section_name, refresh=False):
-        warnings.warn("Config without instantion is deprecated", DeprecationWarning)
+        warnings.warn("Config without instantiation is deprecated", DeprecationWarning)
         config = cls()
         return config.section(section_name)
 
