@@ -329,46 +329,30 @@ class BaseConfig(UserDict):
 class SingleFileConfig(BaseConfig):
     config_file = None
     search_path = None
-    _conf_cache = None
+    data = None
 
-    @classmethod
-    def get_config_search_path(cls):
-        if cls.search_path is None:
+    def get_config_search_path(self):
+        if self.search_path is None:
             raise NotImplementedError("Must define search_path")
         else:
-            return cls.search_path
+            return self.search_path
 
-    @classmethod
-    def get_file_path(cls):
-        if cls.config_file is None:
+    def get_file_path(self):
+        if self.config_file is None:
             raise NotImplementedError("Must define config_file")
         else:
-            for path in cls.get_config_search_path():  # pylint: disable=not-an-iterable
-                if os.path.exists(os.path.join(path, cls.config_file)):
-                    return os.path.join(path, cls.config_file)
+            for path in self.get_config_search_path():  # pylint: disable=not-an-iterable
+                if os.path.exists(os.path.join(path, self.config_file)):
+                    return os.path.join(path, self.config_file)
 
-    @classmethod
-    def refresh_conf_cache(cls):
-        config_path = cls.get_file_path()
-        cls._conf_cache = cls.yaml_load(config_path)
+    def refresh(self):
+        self.data = {}
+        defaults = self.get_defaults()
+        schema = self.get_schema()
 
-    @classmethod
-    def refresh(cls):
-        cls.refresh_conf_cache()
-
-        cls._cache = {}
-        defaults = cls.get_defaults()
-        schema = cls.get_schema()
-
-        keys = set(list(cls._conf_cache.keys()) + list(defaults.keys()))
+        keys = set(list(self.data.keys()) + list(defaults.keys()))
 
         for section_name in keys:
             section_defaults = defaults.get(section_name, {})
             section_schema = schema[section_name]
-            cls._cache[section_name] = cls.load_section(section_name, section_defaults, section_schema)
-
-    @classmethod
-    def read_section_from_file(cls, section_name):
-        if cls._conf_cache is None:
-            cls.refresh_conf_cache()
-        return cls._conf_cache.get(section_name, {})
+            self.data[section_name] = self.load_section(section_name, section_defaults, section_schema)
