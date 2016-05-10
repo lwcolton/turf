@@ -4,6 +4,8 @@
 turf
 ####
 
+.. image:: https://travis-ci.org/HurricaneLabs/turf.svg?branch=master
+
 **Configuration and environment inspection library**
 
 Turf makes managing configuration for your Python application easy.
