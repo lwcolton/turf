@@ -37,7 +37,7 @@ class TestConfig(TestCase):
         mock.patch.object(config, "schema", new={"fake_section":{}}).start()
         with mock.patch.object(config, "refresh") as refresh_patch:
             config.section("fake_section")
-            refresh_patch.assert_called_one_with()
+            refresh_patch.assert_called_once_with()
 
     def test_get_schema(self):
         fake_schema = {}
