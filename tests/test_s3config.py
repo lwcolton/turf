@@ -48,108 +48,119 @@ MockAwsClient.encrypt = MagicMock(return_value={
 
 class TestS3Config(unittest.TestCase):
 
+    def setUp(self):
+        self.boto3_patch = patch("boto3.client")
+        self.boto3_mock = self.boto3_patch.start()
+
+        with patch.object(MyConfig, "read_section_from_file") as mock_read_section:
+            self.config = MyConfig()
+
+        with patch.object(MyEncryptedConfig, "read_section_from_file") as mock_read_section:
+            self.kms_config = MyEncryptedConfig()
+
+
+    def tearDown(self):
+        patch.stopall()
+
     def test_s3_bucket(self):
-        self.assertEqual(MyConfig.get_s3_bucket(), str(sentinel.bucket))
+        self.assertEqual(self.config.get_s3_bucket(), str(sentinel.bucket))
 
     def test_s3_path(self):
         expected_path = "{0}/{1}.yml".format(sentinel.path, sentinel.section)
-        self.assertEqual(MyConfig.get_s3_path(sentinel.section), expected_path)
+        self.assertEqual(self.config.get_s3_path(sentinel.section), expected_path)
 
-    def test_get_aws_client(self):
-        with patch("boto3.client") as boto3_client:
-            MyConfig.get_aws_client(sentinel.aws_service)
-            boto3_client.assert_called_with(sentinel.aws_service)
+    def test_get_aws_client(self):    
+        self.config.get_aws_client(sentinel.aws_service)
+        self.boto3_mock.assert_called_with(sentinel.aws_service)
 
-    @patch.object(MyConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value=mock_config_dict)
-    def test_s3config_calls_s3(self, yaml_mock, aws_mock):
-        result = MyConfig.read_section_from_file(sentinel.section)
+    def test_s3config_calls_s3(self, yaml_mock):
+        aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
+        result = self.config.read_section_from_file(sentinel.section)
         aws_mock.assert_called_with("s3")
 
-    @patch.object(MyConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value=mock_config_dict)
-    def test_s3config_calls_get_object(self, yaml_mock, aws_mock):
-        result = MyConfig.read_section_from_file(sentinel.section)
+    def test_s3config_calls_get_object(self, yaml_mock):
+        aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
+        result = self.config.read_section_from_file(sentinel.section)
         aws_mock.return_value.get_object.assert_called_with(
             Bucket=str(sentinel.bucket),
             Key="{0}/{1}.yml".format(sentinel.path, sentinel.section)
         )
 
-    @patch.object(MyConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value=mock_config_dict)
-    def test_s3config_reads_response(self, yaml_mock, aws_mock):
-        result = MyConfig.read_section_from_file(sentinel.section)
+    def test_s3config_reads_response(self, yaml_mock):
+        aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
+        result = self.config.read_section_from_file(sentinel.section)
         mock_body = aws_mock.return_value.get_object.return_value
         mock_body["Body"].read.assert_called_with(sentinel.content_length)
 
-    @patch.object(MyConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value=mock_config_dict)
-    def test_s3config_parses_yaml(self, yaml_mock, aws_mock):
-        result = MyConfig.read_section_from_file(sentinel.section)
+    def test_s3config_parses_yaml(self, yaml_mock):
+        aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
+        result = self.config.read_section_from_file(sentinel.section)
         yaml_mock.assert_called_with(raw_yaml_body)
 
     @patch("base64.b64decode", return_value=raw_yaml_body)
-    @patch.object(MyEncryptedConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value=mock_config_dict)
-    def test_encrypted_s3config_calls_decrypt(self, yaml_mock, aws_mock, base64_mock):
-        result = MyEncryptedConfig.read_section_from_file(str(sentinel.section))
+    def test_encrypted_s3config_calls_decrypt(self, yaml_mock, base64_mock):
+        aws_mock = patch.object(self.kms_config, "get_aws_client", return_value=MockAwsClient).start()
+        result = self.kms_config.read_section_from_file(str(sentinel.section))
         aws_mock.return_value.decrypt.assert_called_with(
             CiphertextBlob=raw_yaml_body
         )
 
-    @patch.object(MyConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value=mock_config_dict)
-    def test_s3config_returns_config(self, yaml_mock, aws_mock):
-        result = MyConfig.read_section_from_file(str(sentinel.section))
+    def test_s3config_returns_config(self, yaml_mock):
+        aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
+        result = self.config.read_section_from_file(str(sentinel.section))
         self.assertEqual(result, mock_config_dict)
 
-    @patch.object(MyConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value=None)
-    def test_s3config_parse_failure_returns_empty_dict(self, yaml_mock, aws_mock):
-        result = MyConfig.read_section_from_file(str(sentinel.section))
+    def test_s3config_parse_failure_returns_empty_dict(self, yaml_mock):
+        aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
+        result = self.config.read_section_from_file(str(sentinel.section))
         self.assertEqual(result, {})
 
-
-class TestSaveConfig(unittest.TestCase):
-    @patch.object(MyConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value={})
-    def test_save_config_parses_config(self, yaml_mock, aws_mock):
-        result = save_config(MyConfig, raw_yaml_body, str(sentinel.section), None)
+    def test_save_config_parses_config(self, yaml_mock):
+        aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
+        result = save_config(raw_yaml_body, str(sentinel.section), config=self.config)
         yaml_mock.assert_called_with(raw_yaml_body)
 
-    @patch.object(MyConfig, "get_validator", return_value=MockValidator)
-    @patch.object(MyConfig, "get_aws_client", return_value=MockAwsClient)
-    def test_save_config_validates_config(self, aws_mock, validator_mock):
-        result = save_config(MyConfig, raw_yaml_body, str(sentinel.section), None)
-        MyConfig.get_validator.assert_called_with(MyConfig.schema[str(sentinel.section)])
+    def test_save_config_validates_config(self):
+        aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
+        validator_mock = patch.object(self.config, "get_validator", return_value=MockAwsClient).start()
+        result = save_config(raw_yaml_body, str(sentinel.section), config=self.config)
+        self.config.get_validator.assert_called_with(self.config.schema[str(sentinel.section)])
         validator_mock.return_value.validate.assert_called_with(mock_config_dict)
 
-    @patch.object(MyEncryptedConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value=mock_config_dict)
-    def test_save_config_calls_encrypt(self, yaml_mock, aws_mock):
-        result = save_config(MyEncryptedConfig, raw_yaml_body, str(sentinel.section), str(sentinel.kms_key))
+    def test_save_config_calls_encrypt(self, yaml_mock):
+        aws_mock = patch.object(self.kms_config, "get_aws_client", return_value=MockAwsClient).start()
+        result = save_config(raw_yaml_body, str(sentinel.section), kms_key=str(sentinel.kms_key), config=self.kms_config)
         aws_mock.return_value.encrypt.assert_called_with(
             KeyId=str(sentinel.kms_key),
             Plaintext=raw_yaml_body
         )
 
-    @patch.object(MyConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value=mock_config_dict)
-    def test_save_config_calls_put_object(self, yaml_mock, aws_mock):
-        result = save_config(MyConfig, raw_yaml_body, str(sentinel.section), None)
+    def test_save_config_calls_put_object(self, yaml_mock):
+        aws_mock = patch.object(self.config, "get_aws_client", return_value=MockAwsClient).start()
+        result = save_config(raw_yaml_body, str(sentinel.section), config=self.config)
         aws_mock.return_value.put_object.assert_called_with(
-            Bucket=MyConfig.get_s3_bucket(),
-            Key=MyConfig.get_s3_path(str(sentinel.section)),
+            Bucket=self.config.get_s3_bucket(),
+            Key=self.config.get_s3_path(str(sentinel.section)),
             Body=raw_yaml_body
         )
 
-    @patch.object(MyEncryptedConfig, "get_aws_client", return_value=MockAwsClient)
     @patch("yaml.safe_load", return_value=mock_config_dict)
-    def test_save_config_saves_encrypted_config(self, yaml_mock, aws_mock):
-        result = save_config(MyEncryptedConfig, raw_yaml_body, str(sentinel.section), str(sentinel.kms_key))
+    def test_save_config_saves_encrypted_config(self, yaml_mock):
+        aws_mock = patch.object(self.kms_config, "get_aws_client", return_value=MockAwsClient).start()
+        result = save_config(raw_yaml_body, str(sentinel.section), kms_key=str(sentinel.kms_key), config=self.kms_config)
         aws_mock.return_value.put_object.assert_called_with(
-            Bucket=MyConfig.get_s3_bucket(),
-            Key=MyConfig.get_s3_path(str(sentinel.section)),
+            Bucket=self.kms_config.get_s3_bucket(),
+            Key=self.kms_config.get_s3_path(str(sentinel.section)),
             Body=base64.b64encode(str(sentinel.ciphertext_blob).encode())
         )
 
@@ -157,6 +168,6 @@ class TestSaveConfig(unittest.TestCase):
         '''
         test for single name in top level dir
         '''
-        MyConfig.get_s3_path = Mock(return_value='file.yml')
-        response = MyConfig.get_s3_path(str(sentinel.section))
+        self.config.get_s3_path = Mock(return_value='file.yml')
+        response = self.config.get_s3_path(str(sentinel.section))
         self.assertEqual('file.yml',response)

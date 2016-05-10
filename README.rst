@@ -50,8 +50,38 @@ Basic Configuration Manager
         config_dir = "/tmp/turftest"
         schema = {"foo":{"blah":{"type":"string"}}}
 
-    print(MyConfig.section("foo")["blah"])
+    config = MyConfig()
+    print(config["foo"]["blah"])
 
 Will produce::
 
     bar
+
+
+S3 Config Example IAM Policy
+============================
+
+.. code-block:: json
+
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                    "s3:GetObject",
+                    "s3:ListBucket",
+                    "s3:PutObject"
+                ],
+                "Effect": "Allow",
+                "Resource": [
+                    "arn:aws:s3:::my-app-config",
+                    "arn:aws:s3:::my-app-config/*"
+                ],
+                "Principal": {
+                    "AWS": [
+                        "arn:aws:iam:::role/my-app-role"
+                    ]
+                }
+            }
+        ]
+    }
