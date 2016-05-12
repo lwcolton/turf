@@ -379,27 +379,3 @@ class SingleFileConfig(BaseConfig):
 
     def read_section_from_file(self, section_name):
         return self.data.get(section_name, {})
-
-#    _conf_cache = None
-#
-#    def refresh(self):
-#        self._conf_cache = None
-#        return super().refresh()
-#
-#    def get_file_path(self):
-#        if self.config_file is None:
-#            raise NotImplementedError("Must define config_file")
-#        else:
-#            for path in self.get_config_search_path():  # pylint: disable=not-an-iterable
-#                if os.path.exists(os.path.join(path, self.config_file)):
-#                    return os.path.join(path, self.config_file)
-#
-#    def read_section_from_file(self, section_name):
-#        """Loads a section from its config file and parses the YAML."""
-#        if self._conf_cache is None:
-#            config_path = self.get_file_path()
-#            if config_path and os.path.exists(config_path):
-#                self._conf_cache = self.yaml_load(config_path)
-#            else:
-#                self._conf_cache = {}
-#        return self._conf_cache.get(section_name, {})
