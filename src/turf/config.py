@@ -31,10 +31,10 @@ class BaseConfig(UserDict):
 
     config_dir = None
 
-    def __init__(self, *args, values=None, schema=None, defaults=None, 
+    def __init__(self, *args, values=None, schema=None, defaults=None,
                  config_dir=None, refresh_seconds=60, **kwargs):
         """
-        :param str refresh_seconds: The age of a section in seconds before 
+        :param str refresh_seconds: The age of a section in seconds before
             it will be refreshed from the configuration upon access.
         """
         if values is None:
@@ -151,7 +151,7 @@ class BaseConfig(UserDict):
             raise NotImplementedError("Must define config_dir")
         else:
             return self.config_dir
-    
+
     def refresh(self):
         """Reloads all values from the files on disk, verifying the data against the schema.
 
@@ -167,7 +167,7 @@ class BaseConfig(UserDict):
         section_defaults = defaults.get(section_name, {})
         self.data[section_name] = self.load_section(section_name, section_defaults, section_schema)
         self.last_refresh_sections[section_name] = int(time.time())
-    
+
     def get_prehooks(self):
         """Returns a dictionary mapping section names to pre-hooks.
 
@@ -181,7 +181,7 @@ class BaseConfig(UserDict):
         """
         return self.prehooks
 
-    
+
     def prehook_interface(self, section_name, section_defaults):
         """Defines the interface for pre-hooks.
 
@@ -199,7 +199,7 @@ class BaseConfig(UserDict):
         """
         raise NotImplementedError
 
-    
+
     def get_mergehooks(self):
         """Returns a dictionary mapping section names to merge-hooks.
 
@@ -213,7 +213,7 @@ class BaseConfig(UserDict):
         """
         return self.mergehooks
 
-    
+
     def mergehook_interface(self, section_name, section_defaults, config_from_file):
         """Defines the interface for merge-hooks.
 
@@ -237,7 +237,7 @@ class BaseConfig(UserDict):
         raise NotImplementedError
 
 
-    
+
     def get_posthooks(self):
         """Returns a dictionary mapping section names to post-hooks.
 
@@ -251,7 +251,7 @@ class BaseConfig(UserDict):
         """
         return self.posthooks
 
-    
+
     def posthook_interface(self, section_name, section_config):
         """Defintes the interface for post-hooks.
 
@@ -269,7 +269,7 @@ class BaseConfig(UserDict):
         """
         raise NotImplementedError
 
-    
+
     def load_section(self, section_name, section_defaults, section_schema):
         """Handles loading section.
 
@@ -310,7 +310,7 @@ class BaseConfig(UserDict):
 
         return section_config
 
-    
+
     def get_file_path_for_section(self, section_name):
         return os.path.join(self.get_config_dir(), "%s.yml" % section_name)
 
@@ -321,7 +321,7 @@ class BaseConfig(UserDict):
             else:
                 return yaml.load(config_file_handle)
 
-    
+
     def read_section_from_file(self, section_name):
         """Loads a section from its config file and parses the YAML."""
         config_path = self.get_file_path_for_section(section_name)
@@ -329,7 +329,7 @@ class BaseConfig(UserDict):
             return self.yaml_load(config_path)
         else:
             return {}
-    
+
     def raise_validation_error(self, section, errors):
         message = "Errors validating section '{0}':\n\n{1}".format(section, errors)
         raise ValidationError(message, section, errors)
@@ -338,6 +338,14 @@ class SingleFileConfig(BaseConfig):
     config_file = None
     search_path = None
     data = None
+    file_data = None
+
+    def __init__(self, *args, search_path=None, config_file=None, **kwargs):
+        if search_path:
+            self.search_path = search_path
+        if config_file:
+            self.config_file = config_file
+        super().__init__(*args, **kwargs)
 
     def get_config_search_path(self):
         if self.search_path is None:
@@ -354,7 +362,11 @@ class SingleFileConfig(BaseConfig):
                     return os.path.join(path, self.config_file)
 
     def refresh(self):
-        self.data = {}
+        config_path = self.get_file_path()
+        if config_path and os.path.exists(config_path):
+            self.data = self.yaml_load(config_path)
+        else:
+            self.data = {}
         defaults = self.get_defaults()
         schema = self.get_schema()
 
@@ -364,3 +376,30 @@ class SingleFileConfig(BaseConfig):
             section_defaults = defaults.get(section_name, {})
             section_schema = schema[section_name]
             self.data[section_name] = self.load_section(section_name, section_defaults, section_schema)
+
+    def read_section_from_file(self, section_name):
+        return self.data.get(section_name, {})
+
+#    _conf_cache = None
+#
+#    def refresh(self):
+#        self._conf_cache = None
+#        return super().refresh()
+#
+#    def get_file_path(self):
+#        if self.config_file is None:
+#            raise NotImplementedError("Must define config_file")
+#        else:
+#            for path in self.get_config_search_path():  # pylint: disable=not-an-iterable
+#                if os.path.exists(os.path.join(path, self.config_file)):
+#                    return os.path.join(path, self.config_file)
+#
+#    def read_section_from_file(self, section_name):
+#        """Loads a section from its config file and parses the YAML."""
+#        if self._conf_cache is None:
+#            config_path = self.get_file_path()
+#            if config_path and os.path.exists(config_path):
+#                self._conf_cache = self.yaml_load(config_path)
+#            else:
+#                self._conf_cache = {}
+#        return self._conf_cache.get(section_name, {})
